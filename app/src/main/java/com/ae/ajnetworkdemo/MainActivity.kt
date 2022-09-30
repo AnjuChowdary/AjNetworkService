@@ -6,11 +6,11 @@ import android.util.Log
 import com.ae.ajnetworkdemo.databinding.ActivityMainBinding
 import com.ae.ajnetworkservice.repository.AjNetworkingService
 import com.ae.ajnetworkservice.utils.NetworkResponse
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlin.coroutines.CoroutineContext
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), CoroutineScope {
     private val mTAG = MainActivity::class.java.simpleName
     private lateinit var mViewBinding: ActivityMainBinding
 
@@ -32,58 +32,63 @@ class MainActivity : AppCompatActivity() {
         setContentView(mViewBinding.root)
         //endregion
 
+        observeResponse()
+
         //region Get Call Sample
         mViewBinding.checkButton.setOnClickListener{
-            Log.i(mTAG, "check Button Clicked********")
-            runBlocking {
-                launch {
-                    mNetworkResponse.value = mNetworkingService.getCall(endpoint = "/api/users?page=2")
-                    mNetworkResponse.collectLatest {
-                        when(it) {
-                            is NetworkResponse.Loading -> {
-                                Log.i(mTAG, "Loading ===============")
-                            }
-                            is NetworkResponse.Success -> {
-                                Log.i(mTAG, "Success: "+it.response)
-                            }
-                            is NetworkResponse.Error -> {
-                                Log.i(mTAG, "Error: "+it.errorMessage)
-                            }
-                            is NetworkResponse.Idle -> {
-                                Log.i(mTAG, "Idle ..........")
-                            }
-                        }
-                    }
-                }
+            launch {
+                mNetworkResponse.value = mNetworkingService.getCall(endpoint = "/api/users?page=2")
             }
         }
         //endregion
 
         //region Post Call Sample
         mViewBinding.postButton.setOnClickListener {
-            Log.i(mTAG, "Post Button Clicked")
-            runBlocking {
-                launch {
-                    mCreateUserNetworkResponse.value = mNetworkingService.postCall(endpoint = "/api/users", request = NewUser(name = "Anju", job = "SWE"))
-                    mCreateUserNetworkResponse.collectLatest {
-                        when(it) {
-                            is NetworkResponse.Loading -> {
-                                Log.i(mTAG, "Loading ===============")
-                            }
-                            is NetworkResponse.Success -> {
-                                Log.i(mTAG, "Creaet User Success: "+it.response)
-                            }
-                            is NetworkResponse.Error -> {
-                                Log.i(mTAG, "Error: "+it.errorMessage)
-                            }
-                            is NetworkResponse.Idle -> {
-                                Log.i(mTAG, "Idle ..........")
-                            }
-                        }
-                    }
-                }
+            launch {
+                mCreateUserNetworkResponse.value = mNetworkingService.postCall(endpoint = "/api/users", request = NewUser(name = "Anju", job = "SWE"))
             }
         }
         //endregion
     }
+
+    private fun observeResponse() {
+        launch {
+            mNetworkResponse.collectLatest {
+                when(it) {
+                    is NetworkResponse.Loading -> {
+                        Log.i(mTAG, "Loading ===============")
+                    }
+                    is NetworkResponse.Success -> {
+                        Log.i(mTAG, "Success: "+it.response)
+                    }
+                    is NetworkResponse.Error -> {
+                        Log.i(mTAG, "Error: "+it.errorMessage)
+                    }
+                    is NetworkResponse.Idle -> {
+                        Log.i(mTAG, "Idle ..........")
+                    }
+                }
+            }
+
+            mCreateUserNetworkResponse.collectLatest {
+                when(it) {
+                    is NetworkResponse.Loading -> {
+                        Log.i(mTAG, "Loading ===============")
+                    }
+                    is NetworkResponse.Success -> {
+                        Log.i(mTAG, "Creaet User Success: "+it.response)
+                    }
+                    is NetworkResponse.Error -> {
+                        Log.i(mTAG, "Error: "+it.errorMessage)
+                    }
+                    is NetworkResponse.Idle -> {
+                        Log.i(mTAG, "Idle ..........")
+                    }
+                }
+            }
+        }
+    }
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO
 }
