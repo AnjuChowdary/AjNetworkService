@@ -7,13 +7,15 @@ Steps to Integrate
 
 1. Add below piece of code at the repositories list
         maven {
-            url "${artifactory_context_url}"
+            url "https://ajduties.jfrog.io/artifactory/aj-network-service/"
             credentials {
-                username = "${artifactory_user}"
-                password = "${artifactory_password}"
+                username = "anonymus"
+                password = ""
             }
         }
 2. add implementation 'com.ae.ajnetworkservice:AjNetworkService:1.0.0' to your respective modules build.gradle
+
+
 Steps to Use
 1. Initialize AjNetworkService class, which requires a base url as parameter
 2. Use getCall method for any get call, which requires Url (remaining url from base url along with path params if any)
