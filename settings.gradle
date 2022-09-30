@@ -12,6 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "AjNetworkDemo"
+rootProject.name = "AjNetworkService"
 include ':app'
 include ':ajnetworkservice'

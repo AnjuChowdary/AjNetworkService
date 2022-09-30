@@ -1,15 +1,23 @@
+buildscript {
+    dependencies {
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.29.1"
+    }
+}
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'com.jfrog.artifactory'
 }
-
+apply plugin: "com.jfrog.artifactory"
+apply plugin: 'maven-publish'
 android {
     compileSdk 32
 
     defaultConfig {
         minSdk 27
         targetSdk 32
-
+        versionCode 1
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -21,11 +29,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
+    }
+    libraryVariants.all { variant ->
+        variant.outputs.all {
+            // Do not add Variant (buildType) Name at the end
+            outputFileName = "${rootProject.name}-${defaultConfig.versionName}.aar"
+        }
     }
 }
 
@@ -46,3 +60,33 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
+//regionPublishing to JFrog Artifactory
+afterEvaluate {
+    publishing {
+        publications {
+            aar(MavenPublication) {
+                artifactId = "${rootProject.name}"
+                groupId = "com.ae.ajnetworkservice"
+                version = "${android.defaultConfig.versionName}"
+                artifact file("$buildDir/outputs/aar/${rootProject.name}-${android.defaultConfig.versionName}.aar")
+            }
+        }
+    }
+}
+assemble.finalizedBy(artifactoryPublish)
+artifactory {
+    contextUrl = "${artifactory_context_url}"
+    publish {
+        repository {
+            repoKey = "${artifactory_repo_key}"
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+        }
+        defaults {
+            publications('aar')
+            publishArtifacts = true
+            publishPom = true
+        }
+    }
+}
+//endregion
